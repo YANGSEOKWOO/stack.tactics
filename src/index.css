@@ -1,0 +1,22 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 12px;
+  background: #07090f;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+#root {
+  width: 100%;
+}
