@@ -32,17 +32,24 @@ npm run preview  # 빌드 결과 미리보기
 
 ```
 stack-tactics/
+├─ CLAUDE.md          # 작업용 라우팅 테이블 (어떤 문서/스킬을 볼지)
 ├─ index.html
 ├─ vite.config.js
 ├─ src/
 │  ├─ main.jsx        # 진입점
-│  ├─ App.jsx         # 게임 전체 (데이터·로직·UI·스타일)
+│  ├─ App.jsx         # 구성 루트 (useGame + 화면 분기, 얇음)
+│  ├─ data/           # 정적 정의·밸런스 수치 (단일 출처)
+│  ├─ engine/         # 순수 게임 로직 (합성·시너지·전투·상점)
+│  ├─ state/          # useGame 훅 (상태 + 액션)
+│  ├─ components/     # 표현 전용 컴포넌트 (+ screens/)
+│  ├─ styles/         # game.css
 │  └─ index.css       # 페이지 배경/정렬
-└─ docs/
-   └─ design.md       # 설계 · 밸런스 문서 (살아있는 문서)
+├─ docs/              # 설계·아키텍처·밸런스·용어 문서
+└─ .claude/skills/    # 작업별 스킬 (add-unit, add-recipe, tune-balance …)
 ```
 
-> 지금은 `App.jsx` 한 파일에 다 들어있다. 규모가 커지면 `data / engine(전투·합성·경제) / components` 로 분리하는 게 다음 정리 과제.
+> 레이어는 단방향(`data → engine → state → components`)으로 분리되어 있다.
+> 구조·확장 가이드는 [`docs/architecture.md`](docs/architecture.md), 코드 작업 진입점은 [`CLAUDE.md`](CLAUDE.md) 참고.
 
 ## 기술 스택
 

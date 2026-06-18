@@ -1,5 +1,5 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -12,9 +12,10 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 24px 12px;
-  background: #07090f;
+  padding: 28px 16px;
+  background: #eef1f6;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #1e293b;
 }
 
 #root {

@@ -16,6 +16,15 @@ pnpm-debug.log*
 logs
 *.log
 
+# tooling state
+.omc/
+
+# e2e (playwright)
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
 # editor / OS
 .vscode/*
 !.vscode/extensions.json
