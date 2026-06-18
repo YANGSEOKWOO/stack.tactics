@@ -28,6 +28,21 @@ npm run preview  # 빌드 결과 미리보기
 
 요구사항: Node.js 18+
 
+## 테스트 (E2E)
+
+[Playwright](https://playwright.dev) 기반 E2E. dev 서버는 자동 기동(이미 떠 있으면 재사용)된다.
+
+```bash
+npx playwright install chromium  # 최초 1회 (브라우저 다운로드)
+npm run test:e2e                 # 헤드리스 실행
+npm run test:e2e:ui              # UI 모드(디버깅)
+npm run test:e2e:report          # 마지막 HTML 리포트 열기
+```
+
+- 스펙: `tests/e2e/` — 스모크 / 상점 경제 / 전투(계층 방어 아키텍처)
+- **결정적 RNG:** `?seed=<n>` 쿼리가 있으면 상점·전투 난수가 재현된다(`src/engine/rng.js`). 없으면 평소처럼 `Math.random()`이라 프로덕션엔 영향 없음.
+- 선택자는 `data-testid`로 안정화(`hp`/`gold`/`stage`/`shop`/`board`/`tile-N`/`bench`/`unit-chip`/`arch`/`arch-node`/`bug-lane`/`ingress`).
+
 ## 프로젝트 구조
 
 ```
@@ -35,6 +50,8 @@ stack-tactics/
 ├─ CLAUDE.md          # 작업용 라우팅 테이블 (어떤 문서/스킬을 볼지)
 ├─ index.html
 ├─ vite.config.js
+├─ playwright.config.js
+├─ tests/e2e/         # Playwright E2E 스펙 + helpers
 ├─ src/
 │  ├─ main.jsx        # 진입점
 │  ├─ App.jsx         # 구성 루트 (useGame + 화면 분기, 얇음)
