@@ -11,7 +11,7 @@ description: stack.tactics에 새 UI 컴포넌트·화면을 추가하거나 기
 ## 컴포넌트 추가 — `src/components/`
 - 패턴: `Chip.jsx`, `Shop.jsx` 등 기존 파일 형태를 따른다(default export, 한 책임).
 - 데이터 정의가 필요하면 `data/`에서 import(예: `Shop`이 `DEFS`). 로직은 `engine/`에서 import.
-- 스타일: 클래스명을 쓰고 규칙은 `src/styles/game.css`에 추가. 모든 규칙은 `.tt` 스코프 하위(예: `.tt .myclass`).
+- 스타일: **Tailwind v4 유틸리티를 JSX에 직접** 쓴다. 색·표면·선은 시맨틱 토큰 유틸(`bg-panel`/`text-ink`/`border-line`/`text-muted`/`text-cta`…)을 써야 다크/라이트가 자동 전환된다. 카테고리 색이 필요하면 요소에 `cat-${cat}` 클래스를 주고 `text-[var(--acc)]`/`border-[var(--edge)]`/`bg-[var(--soft)]`로 참조. 반복되는 묶음은 `src/components/ui.js`(BTN/LABEL/CM 등)에서 import. 키프레임·다층 배경 등 유틸로 어려운 것만 `src/index.css`에 추가.
 
 ## 새 화면(페이즈) 추가 — `src/components/screens/`
 1. `state/useGame.js`에 `phase` 새 값과 전환 액션 추가.

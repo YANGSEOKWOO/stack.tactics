@@ -57,10 +57,9 @@ stack-tactics/
 │  ├─ App.jsx         # 구성 루트 (useGame + 화면 분기, 얇음)
 │  ├─ data/           # 정적 정의·밸런스 수치 (단일 출처)
 │  ├─ engine/         # 순수 게임 로직 (합성·시너지·전투·상점)
-│  ├─ state/          # useGame 훅 (상태 + 액션)
-│  ├─ components/     # 표현 전용 컴포넌트 (+ screens/)
-│  ├─ styles/         # game.css
-│  └─ index.css       # 페이지 배경/정렬
+│  ├─ state/          # useGame 훅 (상태 + 액션) · useTheme (다크/라이트)
+│  ├─ components/     # 표현 전용 컴포넌트 (+ screens/, ui.js)
+│  └─ index.css       # Tailwind 진입 + 테마 토큰(:root/.dark) + 키프레임
 ├─ docs/              # 설계·아키텍처·밸런스·용어 문서
 └─ .claude/skills/    # 작업별 스킬 (add-unit, add-recipe, tune-balance …)
 ```
@@ -71,7 +70,9 @@ stack-tactics/
 ## 기술 스택
 
 - React 18 + Vite (JavaScript)
-- 스타일은 컴포넌트 내장 CSS (외부 의존성 없음)
+- **Tailwind CSS v4** (`@tailwindcss/vite`) — 유틸리티 기반, 시맨틱 토큰으로 **다크/라이트 테마** 전환
+- 디스플레이/모노 폰트: Space Grotesk + JetBrains Mono (Google Fonts)
+- Playwright E2E
 
 ## 로드맵 (요약)
 

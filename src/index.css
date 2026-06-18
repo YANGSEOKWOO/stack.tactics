@@ -1,23 +1,162 @@
+@import "tailwindcss";
+
+/* 다크는 <html class="dark"> 토글로 제어 (수동 + 시스템 선호 초기화). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 시맨틱 토큰 → Tailwind 유틸리티(bg-panel, text-ink, border-line …)로 매핑.
+   값은 아래 :root(라이트)/.dark(다크)에서 정의 → 유틸 한 벌로 테마 자동 전환. */
+@theme inline {
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "Space Grotesk", "JetBrains Mono", ui-monospace, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-tile: var(--tile);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-cta: var(--cta);
+  --color-prompt: var(--prompt);
+  --color-gold: var(--gold);
+  --color-hp: var(--hp);
+
+  --animate-blink: ttBlink 1.1s steps(1) infinite;
+  --animate-boot: ttBoot 0.5s ease both;
+  --animate-toast: ttToast 0.25s ease;
+  --animate-pop: ttPop 0.85s ease-out forwards;
+  --animate-exposed: ttExposed 1.1s ease-in-out infinite;
+}
+
+/* ---- 테마 토큰 -------------------------------------------------------- */
 :root {
-  color-scheme: light;
+  /* 라이트 */
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --panel: #fbfcfe;
+  --panel2: #f3f6fb;
+  --tile: #fbfcff;
+  --line: #e6e9f0;
+  --line2: #cbd5e1;
+  --ink: #1e293b;
+  --muted: #64748b;
+  --dim: #94a3b8;
+  --cta: #0891b2;
+  --prompt: #0e7490;
+  --gold: #b45309;
+  --hp: #e11d48;
+  --cat-frontend: #ea8a2e;
+  --cat-backend: #7c3aed;
+  --cat-database: #0284c7;
+  --cat-infra: #0f9d76;
+  --cat-composite: #0e7490;
+  --grid-dot: rgba(15, 23, 42, 0.06);
+  --page-glow: rgba(8, 145, 178, 0.10);
 }
 
-* {
-  margin: 0;
-  box-sizing: border-box;
+.dark {
+  /* 다크 — Deploy Console */
+  --bg: #06080d;
+  --surface: #0e131d;
+  --panel: #121826;
+  --panel2: #161d2e;
+  --tile: #0f1521;
+  --line: #222b3d;
+  --line2: #2c3850;
+  --ink: #d8e0f0;
+  --muted: #8b97af;
+  --dim: #5a657f;
+  --cta: #22d3ee;
+  --prompt: #2dd4bf;
+  --gold: #f2c55c;
+  --hp: #ff6b85;
+  --cat-frontend: #f0a84c;
+  --cat-backend: #ad8bf6;
+  --cat-database: #4cb8f0;
+  --cat-infra: #34d39b;
+  --cat-composite: #2dd4bf;
+  --grid-dot: rgba(255, 255, 255, 0.05);
+  --page-glow: rgba(45, 212, 191, 0.10);
 }
 
-body {
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 28px 16px;
-  background: #eef1f6;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  color: #1e293b;
+/* 카테고리 = 신택스 토큰. --acc 는 테마별 색, soft/edge 는 알파 파생(테마 무관). */
+.cat-frontend { --acc: var(--cat-frontend); }
+.cat-backend { --acc: var(--cat-backend); }
+.cat-database { --acc: var(--cat-database); }
+.cat-infra { --acc: var(--cat-infra); }
+.cat-composite { --acc: var(--cat-composite); }
+[class*="cat-"] {
+  --soft: color-mix(in srgb, var(--acc) 12%, transparent);
+  --edge: color-mix(in srgb, var(--acc) 40%, transparent);
 }
 
-#root {
-  width: 100%;
+@layer base {
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px;
+    background:
+      radial-gradient(900px 520px at 50% -8%, var(--page-glow), transparent 62%),
+      var(--bg);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s, color 0.3s;
+  }
+  #root { width: 100%; }
+}
+
+/* 콘솔 표면 — 다층 배경(스캔라인+글로우)은 유틸로 표현이 번거로워 컴포넌트 클래스로. */
+@layer components {
+  .tt-bg {
+    background:
+      radial-gradient(1100px 360px at 50% -12%, var(--page-glow), transparent 60%),
+      linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 88%, #000));
+  }
+  .dark .tt-bg {
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
+      radial-gradient(1100px 360px at 50% -12%, var(--page-glow), transparent 60%),
+      linear-gradient(180deg, #0e131d, #0a0e16);
+  }
+  .board-grid {
+    background:
+      radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0) 0 0 / 16px 16px,
+      var(--panel);
+  }
+  .arch-grid {
+    background:
+      radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0) 0 0 / 22px 22px,
+      radial-gradient(600px 300px at 50% 120%, var(--page-glow), transparent 70%),
+      var(--panel);
+  }
+}
+
+/* SVG 토폴로지 흐름선 — 유틸로 표현 불가, 직접 정의. */
+.flow { stroke-dasharray: 4 3; animation: ttFlow 1s linear infinite; }
+.dark .flow { filter: drop-shadow(0 0 2px currentColor); }
+
+/* 모바일 상점 스크롤바 정리 */
+.shop-scroll::-webkit-scrollbar { height: 6px; }
+.shop-scroll::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
+
+@keyframes ttBlink { 50% { opacity: 0; } }
+@keyframes ttBoot { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ttToast { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes ttPop { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-22px); } }
+@keyframes ttExposed { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hp) 70%, transparent), 0 0 26px 0 var(--hp); } }
+@keyframes ttFlow { to { stroke-dashoffset: -14; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

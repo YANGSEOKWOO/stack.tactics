@@ -21,8 +21,9 @@ data  →  engine  →  state  →  components
 
 ```
 src/
-├─ main.jsx                  진입점 (index.css + styles/game.css 로드)
-├─ App.jsx                   구성 루트 — useGame() + 페이즈별 화면 분기
+├─ main.jsx                  진입점 (index.css 로드)
+├─ index.css                 Tailwind v4 진입 + 테마 토큰(:root/.dark) + 키프레임
+├─ App.jsx                   구성 루트 — useGame()/useTheme() + 페이즈별 화면 분기
 │
 ├─ data/                     ── 정적 정의 (밸런스 단일 출처) ──
 │  ├─ units.js               DEFS — 모든 기물/합성 유닛 (hp·atk·cost·cat·traits)
@@ -43,9 +44,11 @@ src/
 │  └─ rng.js                 rng/setSeed — 시드 가능 난수(?seed= 시 결정적, 평소 Math.random)
 │
 ├─ state/
-│  └─ useGame.js             모든 상태 + 액션(buy/deploy/startCombat/nextRound…)
+│  ├─ useGame.js             모든 상태 + 액션(buy/deploy/startCombat/nextRound…)
+│  └─ useTheme.js            다크/라이트 테마 (localStorage + <html class="dark">)
 │
-├─ components/               ── 표현 전용 ──
+├─ components/               ── 표현 전용 (Tailwind 유틸리티) ──
+│  ├─ ui.js                  공용 className 묶음(BTN/LABEL/CM…) — DRY
 │  ├─ Chip.jsx               유닛 칩(보드/벤치 공용)
 │  ├─ TopBar.jsx             상단 자원 바
 │  ├─ EconomyBar.jsx         레벨·XP·이자·연승
@@ -59,10 +62,11 @@ src/
 │     ├─ ShopScreen.jsx      상점 페이즈
 │     ├─ CombatScreen.jsx    전투 페이즈 (hpStyle 로컬 헬퍼 포함)
 │     └─ GameOverScreen.jsx  게임오버
-│
-└─ styles/
-   └─ game.css               게임 UI 스타일 (.tt 스코프)
 ```
+
+> **스타일:** Tailwind v4(`@tailwindcss/vite`). 유틸리티는 JSX에 직접, 반복은 `components/ui.js`로 묶는다.
+> 색/표면/선은 시맨틱 토큰(`bg-panel`·`text-ink`·`border-line`…)으로, `:root`(라이트)/`.dark`(다크)에서 값이 바뀐다.
+> 카테고리 색은 `.cat-*`가 `--acc`를 공급하고 `--soft/--edge`는 `color-mix`로 파생(테마 무관). 키프레임·다층 배경만 `index.css`에 직접 둔다.
 
 ## 데이터 흐름 (한 라운드)
 

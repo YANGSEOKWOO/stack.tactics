@@ -25,6 +25,10 @@ logs
 /blob-report
 /playwright/.cache
 
+# 임시 스크린샷 / 캡처 헬퍼 (개발용)
+shot-*.png
+tests/_shot.mjs
+
 # editor / OS
 .vscode/*
 !.vscode/extensions.json
