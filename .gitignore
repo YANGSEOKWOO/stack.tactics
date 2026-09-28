@@ -44,3 +44,4 @@ tests/_shot.mjs
 .env
 .env.*
 !.env.example
+.vercel
