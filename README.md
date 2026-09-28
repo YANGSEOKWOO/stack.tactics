@@ -39,7 +39,7 @@ npm run test:e2e:ui              # UI 모드(디버깅)
 npm run test:e2e:report          # 마지막 HTML 리포트 열기
 ```
 
-- 스펙: `tests/e2e/` — 스모크 / 상점 경제 / 전투(계층 방어 아키텍처)
+- 스펙: `tests/e2e/` — 스모크 / 상점 경제 / 전투(헥스 보드 전열)
 - **결정적 RNG:** `?seed=<n>` 쿼리가 있으면 상점·전투 난수가 재현된다(`src/engine/rng.js`). 없으면 평소처럼 `Math.random()`이라 프로덕션엔 영향 없음.
 - 선택자는 `data-testid`로 안정화(`hp`/`gold`/`stage`/`shop`/`board`/`tile-N`/`bench`/`unit-chip`/`arch`/`arch-node`/`bug-lane`/`ingress`).
 
@@ -71,7 +71,8 @@ stack-tactics/
 
 - React 18 + Vite (JavaScript)
 - **Tailwind CSS v4** (`@tailwindcss/vite`) — 유틸리티 기반, 시맨틱 토큰으로 **다크/라이트 테마** 전환
-- 디스플레이/모노 폰트: Space Grotesk + JetBrains Mono (Google Fonts)
+- 폰트: IBM Plex Sans KR(본문) + JetBrains Mono(숫자·코드) + Space Grotesk(디스플레이) (Google Fonts)
+- 게임 HUD 레이아웃 — 데스크톱 / **휴대폰 가로(TFT 모바일식 한 화면)** / 세로 스택
 - Playwright E2E
 
 ## 로드맵 (요약)

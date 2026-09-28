@@ -14,8 +14,8 @@
 | 시너지 **버프 효과량** | `src/engine/synergy.js` | `computeBuffs` |
 | 적 배율·행동 | `src/data/bugs.js` | `BUG_TYPES` |
 | 적 스폰 수·기본 스탯 | `src/engine/combat.js` | `makeEnemies` |
-| 보드/벤치 크기, 별업 배율 | `src/data/economy.js` | `BOARD_MAX`, `BENCH_SLOTS`, `STAR_MULT` |
-| 시작 자원·레벨 상한 | `src/data/economy.js` | `START_GOLD/HP/LEVEL`, `MAX_LEVEL` |
+| 보드(헥스 행×열)/벤치 크기, 별업 배율 | `src/data/economy.js` | `BOARD_ROWS`, `BOARD_COLS`, `BENCH_SLOTS`, `STAR_MULT` |
+| 시작 자원·레벨 상한(= 최대 배치 수) | `src/data/economy.js` | `START_GOLD/HP/LEVEL`, `MAX_LEVEL` |
 | 레벨·XP 곡선 | `src/data/economy.js` | `XP_TO_NEXT` |
 | 레벨별 상점 확률 | `src/data/economy.js` | `ODDS` |
 | 라운드 수입·이자·연승 보너스 | `src/state/useGame.js` | `nextRound` |

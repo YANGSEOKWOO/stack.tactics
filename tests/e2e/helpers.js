@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 
-// 아키텍처 방어 계층 — engine/combat.js 의 TIER_OF 와 동일해야 한다(테스트의 기대값 계산용).
-export const TIER_OF = { infra: 0, frontend: 1, composite: 1, backend: 2, database: 3 };
+// 헥스 보드 열 수 — data/economy.js 의 BOARD_COLS 와 동일해야 한다(타일 인덱스 → 행 계산용).
+export const BOARD_COLS = 7;
 
 // 결정적 RNG(?seed=)로 게임을 연다.
 export async function gotoGame(page, seed = 1) {
@@ -35,10 +35,10 @@ export async function ensureBenchUnit(page) {
   return false;
 }
 
-// 보드 타일 0..count-1 에 유닛을 배치한다. 실제 배치 수 반환.
-export async function placeUnits(page, count) {
+// 보드 타일(기본 0..count-1, tiles 로 지정 가능)에 유닛을 배치한다. 실제 배치 수 반환.
+export async function placeUnits(page, count, tiles = Array.from({ length: count }, (_, i) => i)) {
   let placed = 0;
-  for (let tile = 0; tile < count; tile++) {
+  for (const tile of tiles.slice(0, count)) {
     if (!(await ensureBenchUnit(page))) break;
     await page.getByTestId("bench").getByTestId("unit-chip").first().click();
     await page.getByTestId(`tile-${tile}`).click();
@@ -48,14 +48,15 @@ export async function placeUnits(page, count) {
   return placed;
 }
 
-// arch 노드들의 카테고리를 class(cat-*)에서 뽑아 배열로 반환.
-export async function nodeCats(page) {
+// 전투 보드 노드들의 행(data-row)·노출 여부(class exposed)를 배열로 반환.
+export async function nodeRows(page) {
   const nodes = page.getByTestId("arch-node");
   const n = await nodes.count();
   const out = [];
   for (let i = 0; i < n; i++) {
     const cls = await nodes.nth(i).getAttribute("class");
-    out.push({ cat: (cls.match(/cat-(\w+)/) || [])[1], exposed: cls.includes("exposed") });
+    const row = parseInt(await nodes.nth(i).getAttribute("data-row"), 10);
+    out.push({ row, exposed: cls.includes("exposed") });
   }
   return out;
 }

@@ -1,5 +1,5 @@
 import { DEFS } from "../data/units.js";
-import { ODDS } from "../data/economy.js";
+import { ODDS, START_LEVEL, MAX_LEVEL } from "../data/economy.js";
 import { rng } from "./rng.js";
 
 // 코스트별 구매 가능 기물 풀(합성 유닛 제외). 모듈 로드 시 1회 계산.
@@ -11,7 +11,7 @@ export const POOL_BY_COST = (() => {
 
 // 레벨별 확률로 5칸 상점 슬롯을 굴린다.
 export function rollShop(level) {
-  const odds = ODDS[Math.max(4, Math.min(8, level))] || ODDS[8];
+  const odds = ODDS[Math.max(START_LEVEL, Math.min(MAX_LEVEL, level))] || ODDS[MAX_LEVEL];
   return Array.from({ length: 5 }, () => {
     let r = rng(), acc = 0, cost = 1;
     for (let c = 0; c < 4; c++) { acc += odds[c]; if (r <= acc) { cost = c + 1; break; } }

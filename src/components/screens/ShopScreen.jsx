@@ -1,47 +1,34 @@
 import React from "react";
+import PlayLayout, { TRAY } from "../PlayLayout.jsx";
 import EconomyBar from "../EconomyBar.jsx";
 import BoardGrid from "../BoardGrid.jsx";
-import SynergyBar from "../SynergyBar.jsx";
 import Bench from "../Bench.jsx";
-import RecipeGrid from "../RecipeGrid.jsx";
 import Shop from "../Shop.jsx";
-import { BTN, BTN_PRIMARY, BTN_DANGER, LABEL, CM } from "../ui.js";
+import { BTN, BTN_PRIMARY } from "../ui.js";
 
-// 상점 페이즈 화면 — 경제·보드·시너지·벤치·레시피·상점을 조합한다.
+// 상점 페이즈 — 중앙 보드, 하단 트레이(레벨 · 상점 · 리롤/라운드 시작).
 export default function ShopScreen({ game }) {
   return (
-    <div>
-      <EconomyBar
-        level={game.level} xp={game.xp} xpNeed={game.xpNeed} gold={game.gold}
-        streak={game.streak} streakType={game.streakType} onBuyXp={game.buyXp}
-      />
-
-      <div className={LABEL}>
-        <span><span className={CM}>// </span>보드 · deploy zone <span className="text-line2">({game.board.filter(Boolean).length}/{game.cap})</span></span>
-        <button className={BTN_PRIMARY} onClick={game.startCombat}>라운드 시작 ▶</button>
-      </div>
-      <BoardGrid board={game.board} cap={game.cap} sel={game.sel} onClickBoard={game.clickBoard} />
-
-      <SynergyBar counts={game.counts} />
-
-      <div className={LABEL}><span><span className={CM}>// </span>벤치</span></div>
-      <Bench bench={game.bench} sel={game.sel} onClickBench={game.clickBench} />
-
-      {game.sel && (
-        <div className="flex items-center gap-2.5 mb-3 text-xs text-muted">
-          <span>선택됨 — 보드 칸을 탭해 배치, 또는</span>
-          <button className={BTN_DANGER} onClick={game.sell}>판매</button>
+    <PlayLayout
+      counts={game.counts}
+      recipeProg={game.recipeProg}
+      onOpenRecipe={game.setModal}
+      center={<BoardGrid board={game.board} cap={game.cap} sel={game.sel} onClickBoard={game.clickBoard} />}
+      bench={<Bench bench={game.bench} sel={game.sel} onClickBench={game.clickBench} onSell={game.sell} />}
+      tray={
+        <div className={TRAY}>
+          <EconomyBar level={game.level} xp={game.xp} xpNeed={game.xpNeed} onBuyXp={game.buyXp} />
+          <div className="w-px bg-line narrow:hidden" />
+          <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 narrow:basis-full narrow:order-first">
+            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted land:hidden narrow:hidden">상점 <span className="font-mono normal-case text-dim">npm install</span></span>
+            <Shop shop={game.shop} gold={game.gold} onBuy={game.buy} />
+          </div>
+          <div className="w-[132px] shrink-0 flex flex-col gap-2 land:w-[108px] land:gap-1.5 justify-end narrow:w-auto narrow:flex-1 narrow:flex-row narrow:items-end">
+            <button className={BTN + " w-full"} onClick={game.reroll}>리롤 ↻ 2g</button>
+            <button className={BTN_PRIMARY + " w-full !py-3 !text-sm land:!py-2 land:!text-xs narrow:!py-2"} onClick={game.startCombat}>라운드 시작 ▶</button>
+          </div>
         </div>
-      )}
-
-      <div className={LABEL}><span><span className={CM}>// </span>합성 레시피 — 카드를 누르면 설명, 재료를 보드에 모으면 deploy</span></div>
-      <RecipeGrid recipeProg={game.recipeProg} onOpen={game.setModal} />
-
-      <div className={LABEL}>
-        <span><span className={CM}>// </span>상점 · npm install</span>
-        <button className={BTN} onClick={game.reroll}>리롤 ↻ 2g</button>
-      </div>
-      <Shop shop={game.shop} gold={game.gold} onBuy={game.buy} />
-    </div>
+      }
+    />
   );
 }

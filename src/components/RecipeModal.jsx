@@ -13,7 +13,7 @@ export default function RecipeModal({ recipe, board, onClose, onDeploy }) {
   const deployable = !!recipeBoardIndices(board, recipe);
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-[18px] z-50 animate-[ttToast_0.15s_ease]" onClick={onClose}>
-      <div className={"cat-" + out.cat + " w-full max-w-[460px] bg-surface rounded-[15px] border border-[var(--edge)] shadow-[0_30px_80px_-24px_#000,0_0_40px_-16px_var(--acc)] overflow-hidden"} onClick={(e) => e.stopPropagation()}>
+      <div className={"cat-" + out.cat + " w-full max-w-[460px] max-h-[92dvh] overflow-y-auto bg-surface rounded-[15px] border border-[var(--edge)] shadow-[0_30px_80px_-24px_#000,0_0_40px_-16px_var(--acc)] overflow-hidden"} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2.5 px-[18px] py-4 bg-[var(--soft)] border-b border-[var(--edge)]">
           <span className="text-[30px] [filter:drop-shadow(0_0_8px_var(--soft))]">{out.glyph}</span>
           <div>

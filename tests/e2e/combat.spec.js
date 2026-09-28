@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { gotoGame, placeUnits, nodeCats, TIER_OF } from "./helpers.js";
+import { gotoGame, placeUnits, nodeRows, BOARD_COLS } from "./helpers.js";
 
-test.describe("전투 — 계층 방어 아키텍처", () => {
+test.describe("전투 — 헥스 보드 전열", () => {
   test("유닛을 배치하고 라운드를 시작하면 전투 화면이 뜬다", async ({ page }) => {
     await gotoGame(page);
     const placed = await placeUnits(page, 3);
@@ -13,25 +13,22 @@ test.describe("전투 — 계층 방어 아키텍처", () => {
     await expect(page.getByTestId("ingress")).toBeVisible();
   });
 
-  test("버그는 가장 바깥(최소 tier) 계층만 노출시킨다", async ({ page }) => {
+  test("버그는 가장 앞 행(살아있는 유닛 기준)만 노출시킨다", async ({ page }) => {
     await gotoGame(page);
-    const placed = await placeUnits(page, 3);
+    // 서로 다른 행에 배치: 2열 · 3열 · 4열 (1열은 비워 둔다)
+    const tiles = [BOARD_COLS + 1, BOARD_COLS * 2 + 3, BOARD_COLS * 3 + 5];
+    const placed = await placeUnits(page, 3, tiles);
     expect(placed).toBeGreaterThan(0);
     await page.getByRole("button", { name: /라운드 시작/ }).click();
     await expect(page.getByTestId("arch-node").first()).toBeVisible();
 
-    // 전투 시작 직후(모두 생존) — exposed 노드 = 보드에 존재하는 가장 바깥 계층.
-    const cats = await nodeCats(page);
-    expect(cats.length).toBe(placed);
-    const tiers = cats.map((c) => TIER_OF[c.cat] ?? 1);
-    const outer = Math.min(...tiers);
-    for (const c of cats) {
-      const expected = (TIER_OF[c.cat] ?? 1) === outer;
-      expect(c.exposed, `${c.cat} 노드의 노출 여부`).toBe(expected);
-    }
-    // 안쪽 계층(outer보다 깊은)은 절대 노출되지 않는다.
-    const deeperExposed = cats.some((c) => (TIER_OF[c.cat] ?? 1) > outer && c.exposed);
-    expect(deeperExposed).toBe(false);
+    // 전투 시작 직후(모두 생존) — exposed 노드 = 유닛이 있는 가장 앞 행.
+    const nodes = await nodeRows(page);
+    expect(nodes.length).toBe(placed);
+    const front = Math.min(...nodes.map((n) => n.row));
+    for (const n of nodes) expect(n.exposed, `${n.row}행 노드의 노출 여부`).toBe(n.row === front);
+    // 뒷줄은 절대 노출되지 않는다.
+    expect(nodes.some((n) => n.row > front && n.exposed)).toBe(false);
   });
 
   test("전투는 승패 결과로 종료되고 다음 라운드로 넘어간다", async ({ page }) => {

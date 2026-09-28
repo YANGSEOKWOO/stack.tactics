@@ -3,9 +3,24 @@
 /* 다크는 <html class="dark"> 토글로 제어 (수동 + 시스템 선호 초기화). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* 화면 방향 variant — TFT 모바일처럼 휴대폰 가로 모드는 한 화면 HUD로.
+   land   : 휴대폰 가로(낮은 높이) → 데스크톱과 같은 3열 배치를 압축해서 사용
+   stack  : 좁은 화면 세로 스택(데스크톱·휴대폰 가로 제외)
+   narrow : 아주 좁은 세로 화면(760px 이하, 휴대폰 가로 제외) */
+@custom-variant land (@media (orientation: landscape) and (max-height: 500px));
+@custom-variant stack {
+  @media (max-width: 1023.98px) and (orientation: portrait) { @slot; }
+  @media (max-width: 1023.98px) and (min-height: 501px) { @slot; }
+}
+@custom-variant narrow {
+  @media (max-width: 760px) and (orientation: portrait) { @slot; }
+  @media (max-width: 760px) and (min-height: 501px) { @slot; }
+}
+
 /* 시맨틱 토큰 → Tailwind 유틸리티(bg-panel, text-ink, border-line …)로 매핑.
    값은 아래 :root(라이트)/.dark(다크)에서 정의 → 유틸 한 벌로 테마 자동 전환. */
 @theme inline {
+  --font-sans: "IBM Plex Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-display: "Space Grotesk", "JetBrains Mono", ui-monospace, sans-serif;
 
@@ -100,12 +115,12 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 32px 16px;
+    padding: 20px 16px;
     background:
       radial-gradient(900px 520px at 50% -8%, var(--page-glow), transparent 62%),
       var(--bg);
     color: var(--ink);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     transition: background 0.3s, color 0.3s;
   }
@@ -130,6 +145,12 @@
       radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0) 0 0 / 16px 16px,
       var(--panel);
   }
+  /* 2.5D 아레나 배경 — 멀리(위)는 어둡게, 가까이(아래)는 밝게: 바닥 조명 느낌 */
+  .arena-bg {
+    background:
+      radial-gradient(90% 70% at 50% 78%, color-mix(in srgb, var(--cta) 14%, transparent), transparent 70%),
+      linear-gradient(180deg, color-mix(in srgb, var(--panel) 86%, var(--ink)) 0%, var(--panel) 55%);
+  }
   .arch-grid {
     background:
       radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0) 0 0 / 22px 22px,
@@ -138,9 +159,147 @@
   }
 }
 
-/* SVG 토폴로지 흐름선 — 유틸로 표현 불가, 직접 정의. */
-.flow { stroke-dasharray: 4 3; animation: ttFlow 1s linear infinite; }
-.dark .flow { filter: drop-shadow(0 0 2px currentColor); }
+/* ---- 헥스(벌집) 보드 — 2.5D 아레나 --------------------------------------
+   TFT처럼 바닥(.hex-grid)을 원근으로 눕히고(rotateX --tilt), 기물(.piece)은 칸 중심에 세운 빌보드.
+   구조: .hex-wrap(컨테이너) > .hex-stage(--hw·원근) > .hex-grid(눕힌 바닥, preserve-3d)
+         > 행 > .hex-slot(preserve-3d) > [.hex-tile(육각 clip) · .hex-shadow · .piece > .piece-inner]
+   주의: preserve-3d 체인(grid→행→slot) 위에는 filter/opacity/overflow/clip-path 금지(평면으로 눌림).
+         시각 효과는 잎 노드(.hex-tile, .piece-inner)에만 준다.
+   --cols/--rows 는 HexBoard 가 data 값으로 주입. 투영 높이 ≈ hw × (rows·0.56 + 1.15) (원근으로 가까운 행이 커지는 여유 포함). */
+.hex-clip { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.hex-wrap { container-type: inline-size; width: 100%; }
+.hex-stage {
+  --tilt: 52deg;
+  --hw: min(calc(100cqw / ((var(--cols) + 0.5) * 1.2)), 80px);
+  position: relative; width: 100%;
+  height: calc(var(--hw) * (var(--rows) * 0.56 + 1.15));
+  perspective: calc(var(--hw) * 13);
+  perspective-origin: 50% 30%;
+}
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 500px) {
+  .hex-wrap { container-type: size; height: 100%; }
+  .hex-stage {
+    --hw: min(calc(100cqw / ((var(--cols) + 0.5) * 1.2)), calc(100cqh / (var(--rows) * 0.56 + 1.15)), 96px);
+    height: 100%;
+  }
+}
+.hex-grid {
+  position: absolute; left: 50%; top: calc(50% + var(--hw) * 0.34);
+  width: calc(var(--hw) * (var(--cols) + 0.5));
+  transform: translate(-50%, -50%) rotateX(var(--tilt));
+  transform-style: preserve-3d;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .hex-grid { top: calc(50% + var(--hw) * 0.18); }
+}
+.hex-row, .hex-slot { transform-style: preserve-3d; }
+/* 바닥·행 박스는 칸과 같은 평면(z=0)이라 이벤트 hit-test 가 바닥에 걸린다 → 바닥/행은 통과, 칸만 받는다. */
+.hex-grid, .hex-row { pointer-events: none; }
+.hex-slot { pointer-events: auto; position: relative; flex-shrink: 0; width: var(--hw); height: calc(var(--hw) * 1.1547); }
+.hex-tile { position: absolute; inset: 1.5px; transform: translateZ(0.5px); }
+
+/* 기물 발밑 그림자(바닥 평면) */
+.hex-shadow {
+  position: absolute; left: 50%; top: 50%; width: 66%; height: 58%; border-radius: 50%;
+  transform: translate(-50%, -50%) translateZ(1px);
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.2) 60%, transparent);
+  pointer-events: none;
+}
+/* 기물 빌보드 — 칸 중심에 발을 딛고 카메라를 향해 선다 */
+.piece {
+  position: absolute; left: 50%; bottom: 50%;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) translateZ(2px) rotateX(calc(var(--tilt) * -1));
+}
+.piece-inner { display: flex; flex-direction: column; align-items: center; transition: translate 120ms ease-out; }
+.hex-slot:hover .piece-inner { translate: 0 -3px; }
+/* 두께감 있는 게임 말(토큰) — cat-* / --acc 색 */
+.piece-token {
+  width: calc(var(--hw) * 0.62); height: calc(var(--hw) * 0.62);
+  display: grid; place-items: center; position: relative;
+  color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(120% 95% at 30% 18%, color-mix(in srgb, var(--acc) 45%, #fff) 0%, var(--acc) 48%, color-mix(in srgb, var(--acc) 55%, #000) 100%);
+  border: 2px solid color-mix(in srgb, var(--acc) 35%, #fff);
+  box-shadow:
+    inset 0 -3px 0 rgba(0, 0, 0, 0.28),
+    0 4px 0 color-mix(in srgb, var(--acc) 45%, #000),
+    0 8px 12px -2px rgba(0, 0, 0, 0.45);
+}
+.piece-token::after {  /* 상단 광택 */
+  content: ""; position: absolute; left: 14%; right: 14%; top: 6%; height: 30%; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent);
+  pointer-events: none;
+}
+.piece-hp {
+  width: calc(var(--hw) * 0.7); height: 5px; margin-bottom: 3px; border-radius: 3px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.55); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- 전투 타격 모션 ------------------------------------------------------
+   한 틱(650ms) 안에서: 돌진(0ms) → 투사체(90ms~) → 피격 흔들림·섬광·데미지(--hd) → 사망.
+   같은 요소에서 매 틱 애니메이션을 재시작하려고 A/B 두 벌 키프레임을 틱 홀짝으로 번갈아 쓴다. */
+.fx-lunge-a { animation: ttLungeA 300ms cubic-bezier(0.3, 0.7, 0.4, 1); }
+.fx-lunge-b { animation: ttLungeB 300ms cubic-bezier(0.3, 0.7, 0.4, 1); }
+/* 돌진은 .hex-slot(바닥 평면)에 → 기물이 바닥을 따라 미끄러지듯 튀어나간다 */
+@keyframes ttLungeA { 35% { transform: translate(var(--lx), var(--ly)); } }
+@keyframes ttLungeB { 35% { transform: translate(var(--lx), var(--ly)); } }
+
+.fx-hit-a { animation: ttHitA 280ms ease-out var(--hd, 0ms) both; }
+.fx-hit-b { animation: ttHitB 280ms ease-out var(--hd, 0ms) both; }
+@keyframes ttHitA {
+  15% { transform: translate(-4px, 2px) scale(0.94); filter: brightness(2.4) saturate(0.2); }
+  35% { transform: translate(4px, -1px); filter: brightness(1.5); }
+  60% { transform: translate(-2px, 0); }
+}
+@keyframes ttHitB {
+  15% { transform: translate(-4px, 2px) scale(0.94); filter: brightness(2.4) saturate(0.2); }
+  35% { transform: translate(4px, -1px); filter: brightness(1.5); }
+  60% { transform: translate(-2px, 0); }
+}
+
+/* 사망 — 하얗게 번쩍인 뒤 말이 뒤로 넘어가 바닥에 눕는다(.piece 회전). */
+.fx-fall { animation: ttFall 520ms cubic-bezier(0.5, 0, 0.8, 0.4) var(--hd, 0ms) both; }
+@keyframes ttFall {
+  0% { transform: translateX(-50%) translateZ(2px) rotateX(calc(var(--tilt) * -1)); filter: none; opacity: 1; }
+  18% { transform: translateX(-50%) translateZ(2px) rotateX(calc(var(--tilt) * -1 - 8deg)); filter: brightness(2.8) saturate(0); opacity: 1; }
+  100% { transform: translateX(-50%) translateZ(1px) rotateX(-4deg); filter: grayscale(1) brightness(0.7); opacity: 0.35; }
+}
+.fx-fallen { transform: translateX(-50%) translateZ(1px) rotateX(-4deg); filter: grayscale(1) brightness(0.7); opacity: 0.35; }
+
+.fx-shake-a { animation: ttShakeA 300ms ease-out 280ms; }
+.fx-shake-b { animation: ttShakeB 300ms ease-out 280ms; }
+@keyframes ttShakeA { 20% { transform: translate(-5px, 3px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } }
+@keyframes ttShakeB { 20% { transform: translate(-5px, 3px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } }
+
+/* 투사체 — 공격자 → 대상. 회전된 광선 조각이 날아간다. */
+.fx-shot {
+  position: absolute; width: 26px; height: 5px; margin: -2.5px 0 0 -13px; border-radius: 5px;
+  background: linear-gradient(90deg, transparent, var(--c) 40%, #fff);
+  box-shadow: 0 0 10px 2px var(--c);
+  animation: ttShot 190ms ease-in var(--d, 0ms) both;
+}
+@keyframes ttShot {
+  0% { opacity: 0; transform: translate(0, 0) rotate(var(--rot)) scaleX(0.4); }
+  10% { opacity: 1; }
+  90% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scaleX(1.4); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scaleX(0.6); }
+}
+/* 착탄 스파크 링 */
+.fx-spark {
+  position: absolute; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%;
+  border: 2px solid var(--c); box-shadow: 0 0 14px var(--c), inset 0 0 8px var(--c);
+  animation: ttSpark 260ms ease-out var(--d, 0ms) both;
+}
+@keyframes ttSpark { 0% { opacity: 0; transform: scale(0.2); } 15% { opacity: 1; } 100% { opacity: 0; transform: scale(1.7); } }
+
+/* 데미지/회복 숫자 — 튀어나왔다가 떠오르며 사라짐 */
+.fx-num { animation: ttNum 820ms cubic-bezier(0.2, 0.8, 0.3, 1) var(--hd, 0ms) both; }
+@keyframes ttNum {
+  0% { opacity: 0; transform: translate(-50%, 4px) scale(0.5); }
+  14% { opacity: 1; transform: translate(-50%, -4px) scale(1.35); }
+  28% { transform: translate(-50%, -6px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -30px) scale(0.95); }
+}
 
 /* 모바일 상점 스크롤바 정리 */
 .shop-scroll::-webkit-scrollbar { height: 6px; }
@@ -152,6 +311,11 @@
 @keyframes ttPop { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-22px); } }
 @keyframes ttExposed { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hp) 70%, transparent), 0 0 26px 0 var(--hp); } }
 @keyframes ttFlow { to { stroke-dashoffset: -14; } }
+
+/* 모바일: 바깥 여백 제거 → 화면 폭을 게임에 양보 */
+@media (max-width: 480px), (orientation: landscape) and (max-height: 500px) {
+  body { padding: 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

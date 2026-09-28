@@ -10,7 +10,7 @@
 | 카테고리 | `cat` | frontend·backend·database·infra·composite. **시너지 단위**이자 색상 단위. |
 | 코스트 | `cost` | 구매 가격 = 희귀도. 레벨↑ → 고코스트 등장 확률↑. |
 | 성급 / 별업 | `star`, `STAR_MULT` | 같은 기물 3개 → ★ 1단계 상승(자동). 능력치 배율 적용. |
-| 보드 | `board` (길이 `BOARD_MAX`) | 전투에 나가는 배치 구역. `cap`(=레벨)까지만 사용 가능. |
+| 보드 | `board` (길이 `BOARD_MAX` = `BOARD_ROWS`×`BOARD_COLS` = 4×7) | TFT식 벌집(헥스) 배치 구역. 28칸 어디든 놓되 동시 배치 수는 `cap`(=레벨, 최대 10). 인덱스 → 행 `i / BOARD_COLS`. |
 | 벤치 | `bench` (`BENCH_SLOTS`) | 대기 구역. 전투 참여 안 함. |
 | deploy | `deploy(recipe)` | 보드의 재료를 합성 유닛으로 변환(수동, 가로축 성장). |
 | 레시피 | `RECIPES`, `recipeBoardIndices` | 합성 조합 정의 (need → makes). |
@@ -18,7 +18,8 @@
 | 버프 | `computeBuffs` | 시너지 결과 (atkMult·hpMult·heal·dmgRed). |
 | 버그 | `BUG_TYPES`, `makeEnemies` | 적. 스테이지마다 웨이브로 유입. |
 | 틱 | `combatTick`, `tick` | 전투 진행 단위(650ms). 28틱 도달 시 잔여 체력으로 승패. |
-| 방어 계층 | `TIER_OF`, `unitTier`, `frontTierIdx` | 버그가 때리는 순서: Infra(외곽)→Frontend→Backend→Database(심층). 바깥 계층 생존 시 안쪽은 보호됨. |
+| 전열 / 최전방 | `unitRow`, `frontRow`, `rowName` | 버그는 살아있는 유닛이 있는 **가장 앞 행**(row 0 = 맨 위)만 때린다. 앞줄이 무너져야 뒷줄 노출 → 탱커 앞, 캐리 뒤. |
+| 전투 이벤트 | `combat.events` | 틱마다 `{src, dst, dmg, side}` 타격 목록. 표현 계층이 돌진·투사체·피격 모션을 그린다. |
 | 페이즈 | `phase` | `"shop"` | `"combat"` | `"gameover"`. |
 | 이자 | `Math.floor(gold/10)` | 보유 골드 10당 +1g (최대 5). 경제 굴리기. |
 | 연승/연패 | `streak`, `streakType` | 연속 승/패 보너스 골드. |

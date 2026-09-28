@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { DEFS } from "../data/units.js";
 import { RECIPES } from "../data/recipes.js";
 import {
-  BOARD_MAX, BENCH_SLOTS, START_GOLD, START_HP, START_LEVEL, MAX_LEVEL, XP_TO_NEXT,
+  BOARD_MAX, BOARD_COLS, BENCH_SLOTS, START_GOLD, START_HP, START_LEVEL, MAX_LEVEL, XP_TO_NEXT,
 } from "../data/economy.js";
 import { resetUid } from "../engine/uid.js";
 import { makeUnit } from "../engine/units.js";
@@ -10,7 +10,7 @@ import { rollShop } from "../engine/shop.js";
 import { processMerges } from "../engine/merge.js";
 import { recipeBoardIndices } from "../engine/recipes.js";
 import { computeCounts, computeBuffs } from "../engine/synergy.js";
-import { makeEnemies, combatTick, TIER_OF } from "../engine/combat.js";
+import { makeEnemies, combatTick } from "../engine/combat.js";
 
 // 게임의 모든 상태와 액션을 캡슐화하는 훅. App/컴포넌트는 순수 표현(rendering)만 담당한다.
 // 새 시스템(보스·증강체 등)을 붙일 땐 여기서 액션을 추가하고 engine/data 에 로직·수치를 둔다.
@@ -32,6 +32,7 @@ export function useGame() {
   const [modal, setModal] = useState(null); // recipe object
   const tref = useRef();
   const cap = level;
+  const interest = Math.min(5, Math.floor(gold / 10));
 
   function flash(m) { setToast(m); clearTimeout(tref.current); tref.current = setTimeout(() => setToast(""), 1900); }
   function settle(nb, brd) { const m = processMerges(nb, brd); setBench(m.bench); setBoard(m.board); }
@@ -54,9 +55,10 @@ export function useGame() {
     let nXp = xp + 4, nLv = level;
     while (nLv < MAX_LEVEL && nXp >= XP_TO_NEXT[nLv]) { nXp -= XP_TO_NEXT[nLv]; nLv++; }
     setGold((g) => g - 4); setXp(nXp); setLevel(nLv);
-    if (nLv > level) flash("레벨 " + nLv + "! 보드 " + nLv + "칸 해제");
+    if (nLv > level) flash("레벨 " + nLv + "! 이제 " + nLv + "기까지 배치 가능");
   }
   function deploy(recipe) {
+    if (phase !== "shop") return;
     const idx = recipeBoardIndices(board, recipe);
     if (!idx) return flash("보드에 재료를 모두 올려야 deploy할 수 있어");
     const nb = [...board]; const landing = Math.min(...idx);
@@ -69,16 +71,18 @@ export function useGame() {
     if (phase !== "shop") return;
     if (sel && sel.where === "board") {
       const u = board[sel.i]; if (!u) return setSel(null);
+      if (bench.length >= BENCH_SLOTS) return flash("벤치가 가득 찼어");
       const nb = [...board]; nb[sel.i] = null; settle([...bench, u], nb); setSel(null); return;
     }
     setSel(sel && sel.where === "bench" && sel.i === i ? null : { where: "bench", i });
   }
   function clickBoard(i) {
     if (phase !== "shop") return;
-    if (i >= cap) return flash("레벨업으로 해제되는 슬롯이야");
     if (sel) {
       if (sel.where === "bench") {
         const u = bench[sel.i]; if (!u) return setSel(null);
+        // 빈 칸에 새로 올리는 경우만 배치 수(cap = 레벨) 제한. 교체는 수가 그대로라 허용.
+        if (!board[i] && board.filter(Boolean).length >= cap) return flash("레벨 " + level + " — 최대 " + cap + "기까지 배치할 수 있어");
         const nb = [...board];
         if (nb[i]) { const sw = nb[i]; nb[i] = u; settle(bench.filter((_, k) => k !== sel.i).concat(sw), nb); }
         else { nb[i] = u; settle(bench.filter((_, k) => k !== sel.i), nb); }
@@ -101,16 +105,17 @@ export function useGame() {
     setSel(null); flash("판매 +" + refund + "g");
   }
   function startCombat() {
-    const units = board.filter(Boolean);
+    // 보드 인덱스 → 헥스 행/열. 행이 곧 전열(row 0 = 최전방).
+    const units = board.map((u, i) => u && { u, i }).filter(Boolean);
     if (!units.length) return flash("보드에 유닛을 먼저 올려줘");
     const buffs = computeBuffs(computeCounts(board));
     setSel(null);
     setCombat({
-      player: units.map((u) => {
+      player: units.map(({ u, i }) => {
         const hpMax = Math.round(u.hp * buffs.hpMult);
-        return { uid: u.uid, defId: u.defId, name: u.name, glyph: u.glyph, cat: u.cat, tier: TIER_OF[u.cat] ?? 1, star: u.star, composite: u.composite, hp: hpMax, cur: hpMax, atk: Math.round(u.atk * buffs.atkMult), hit: false, lastDmg: 0 };
+        return { uid: u.uid, defId: u.defId, name: u.name, glyph: u.glyph, cat: u.cat, row: Math.floor(i / BOARD_COLS), col: i % BOARD_COLS, star: u.star, composite: u.composite, hp: hpMax, cur: hpMax, atk: Math.round(u.atk * buffs.atkMult), hit: false, lastDmg: 0, lastHeal: 0, died: false };
       }),
-      enemy: makeEnemies(stage), tick: 0, done: false, result: null, buffs,
+      enemy: makeEnemies(stage), events: [], tick: 0, done: false, result: null, buffs,
     });
     setPhase("combat");
   }
@@ -127,7 +132,6 @@ export function useGame() {
     while (nLv < MAX_LEVEL && nXp >= XP_TO_NEXT[nLv]) { nXp -= XP_TO_NEXT[nLv]; nLv++; }
     let nhp = hp, dmg = 0;
     if (!won) { dmg = combat.enemy.filter((e) => e.cur > 0).length * 4 + stage; nhp = hp - dmg; }
-    const interest = Math.min(5, Math.floor(gold / 10));
     const sBonus = nStreak >= 4 ? 3 : nStreak >= 3 ? 2 : nStreak >= 2 ? 1 : 0;
     const income = 5 + interest + sBonus;
     setStage((s) => s + 1); setCombat(null);
@@ -153,7 +157,7 @@ export function useGame() {
 
   return {
     // 자원/진행
-    gold, hp, stage, level, xp, streak, streakType, xpNeed, cap,
+    gold, hp, stage, level, xp, streak, streakType, xpNeed, cap, interest,
     // 보드 상태
     shop, bench, board, sel, counts, recipeProg,
     // 페이즈/전투/UI

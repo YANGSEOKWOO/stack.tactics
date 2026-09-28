@@ -13,19 +13,16 @@ export default function App() {
   const game = useGame();
   const { theme, toggle } = useTheme();
   return (
-    <div className="tt-bg font-mono text-ink text-[13.5px] leading-relaxed w-full max-w-[1060px] mx-auto p-5 rounded-2xl border border-line shadow-[0_40px_120px_-40px_rgba(0,0,0,0.55)] animate-boot max-[480px]:p-3">
-      <TopBar hp={game.hp} gold={game.gold} stage={game.stage} theme={theme} onToggleTheme={toggle} />
+    <div className="tt-bg text-ink text-[13px] leading-relaxed w-full max-w-[1180px] mx-auto p-4 rounded-2xl border border-line shadow-[0_40px_120px_-40px_rgba(0,0,0,0.55)] animate-boot max-[480px]:p-2 max-[480px]:rounded-none max-[480px]:border-0 land:h-dvh land:max-w-none land:flex land:flex-col land:overflow-hidden land:rounded-none land:border-0 land:py-1.5 land:pl-[max(6px,env(safe-area-inset-left))] land:pr-[max(6px,env(safe-area-inset-right))]">
+      <TopBar
+        hp={game.hp} gold={game.gold} stage={game.stage} interest={game.interest}
+        streak={game.streak} streakType={game.streakType} theme={theme} onToggleTheme={toggle}
+      />
 
-      <div className="mt-3 mb-4 mx-0.5 text-[12.5px] text-muted flex items-center gap-2 flex-wrap">
-        <span className="text-prompt font-bold">~/stack</span>
-        <span className="text-cta font-extrabold">$</span>
-        <span className="text-ink font-semibold">compose --deploy</span>
-        <span className="inline-block w-2 h-[15px] bg-prompt rounded-[1px] align-[-2px] animate-blink shadow-[0_0_10px_var(--prompt)]" />
-        <span className="text-dim max-[480px]:basis-full">// HTML·CSS·JS를 모아 배포하고 시너지를 쌓아 버그를 막아내세요</span>
-      </div>
+      <div className="hidden narrow:block mt-2 text-center text-[11px] text-dim">📱 가로로 돌리면 TFT처럼 한 화면에서 플레이할 수 있어요</div>
 
       {game.toast && (
-        <div className="mb-3 px-3.5 py-2.5 rounded-[10px] text-center text-[13px] text-prompt font-bold border border-prompt/30 bg-prompt/10 shadow-[0_0_24px_-10px_var(--prompt)] animate-toast">
+        <div role="status" className="fixed top-4 left-1/2 -translate-x-1/2 z-40 max-w-[90vw] px-4 py-2.5 rounded-xl text-center text-[13px] font-semibold text-ink border border-cta/40 bg-surface shadow-[0_16px_40px_-16px_rgba(0,0,0,0.5),0_0_24px_-12px_var(--cta)] animate-toast">
           {game.toast}
         </div>
       )}
@@ -33,7 +30,7 @@ export default function App() {
       {game.phase === "gameover" ? (
         <GameOverScreen stage={game.stage} onRestart={game.restart} />
       ) : game.phase === "combat" ? (
-        <CombatScreen combat={game.combat} onNext={game.nextRound} />
+        <CombatScreen game={game} />
       ) : (
         <ShopScreen game={game} />
       )}
@@ -41,10 +38,6 @@ export default function App() {
       {game.modal && (
         <RecipeModal recipe={game.modal} board={game.board} onClose={() => game.setModal(null)} onDeploy={game.deploy} />
       )}
-
-      <div className="mt-3.5 border-t border-line pt-3 text-[11px] leading-[1.8] text-dim">
-        같은 기물 3개 → 자동 ★★ (합성 유닛도 별업) · 카테고리 수만큼 시너지 발동 · 재료를 보드에 모아 레시피 모달에서 deploy · 전투는 아키텍처 다이어그램으로 버그와 싸움 · 경험치로 레벨업 → 보드 칸·고급 기물 확률 ↑
-      </div>
     </div>
   );
 }
